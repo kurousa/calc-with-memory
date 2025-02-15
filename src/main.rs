@@ -28,12 +28,34 @@ fn main() {
         let left: f64 = tokens[0].parse().unwrap();
         let right: f64 = tokens[2].parse().unwrap();
         let result: f64 = match tokens[1] {
-            "+" => left + right,
-            "-" => left - right,
-            "*" => left * right,
-            "/" => left / right,
-            _ => panic!("Invalid operator"),
+            "+" => add_value(left, right),
+            "-" => sub_value(left, right),
+            "*" => multiply_value(left, right),
+            "/" => divide_value(left, right),
+            _ => unreachable!("Invalid operator, use only +, -, *, /"),
         };
-        println!("{} equal {}", line, result);
+        print_formula_result(line, result);
     }
+}
+
+// 計算結果出力
+fn print_formula_result(formula: String, result: f64) {
+    println!("{} equal {}", formula, result);
+    }
+
+// 加算処理
+fn add_value(left: f64, right: f64) -> f64 {
+    left + right
+}
+// 減算処理
+fn sub_value(left: f64, right: f64) -> f64 {
+    left - right
+}
+// 乗算処理
+fn multiply_value(left: f64, right: f64) -> f64 {
+    left * right
+}
+// 除算処理
+fn divide_value(left: f64, right: f64) -> f64 {
+    left / right
 }
