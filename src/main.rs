@@ -94,5 +94,5 @@ fn set_memory_print_value(memories: &mut [f64], token: &str, prev_result: f64) {
     // 例: mem10+ といった文字列の場合、10を取得
     let slot_index: usize = token[3..token.len() - 1].parse().unwrap();
     memories[slot_index] += prev_result;
-    print_formula_result("set memory".to_string(), memories[slot_index]);
+    print_formula_result(format!("set memory{}", slot_index), memories[slot_index]);
 }
