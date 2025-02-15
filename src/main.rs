@@ -18,6 +18,7 @@ fn main() {
         let line = line.unwrap();
         if line.is_empty() {
             // 空行の場合処理を終了
+            print!("Bye!");
             break;
         }
         // 入力を空白区切りで分割
