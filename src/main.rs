@@ -43,8 +43,8 @@ fn main() {
         let third_token = tokens[2];
         // 数値部を取得
         // memの場合はmemoryの値を利用
-        let left: f64 = eval_token(first_token, memories);
-        let right: f64 = eval_token(third_token, memories);
+        let left: f64 = eval_token(first_token, &memories);
+        let right: f64 = eval_token(third_token, &memories);
         let expression: &str = tokens[1];
         let result: f64 = match expression {
             "+" => add_value(left, right),
@@ -80,7 +80,7 @@ fn divide_value(left: f64, right: f64) -> f64 {
     left / right
 }
 
-fn eval_token(token: &str, memories: Vec<f64>) -> f64 {
+fn eval_token(token: &str, memories: &[f64]) -> f64 {
     if token.starts_with("mem") {
         let slot_index: usize = token[3..].parse().unwrap();
         memories[slot_index]
@@ -89,7 +89,7 @@ fn eval_token(token: &str, memories: Vec<f64>) -> f64 {
     }
 }
 
-fn set_memory_print_value(memories: &mut Vec<f64>, token: &str, prev_result: f64) {
+fn set_memory_print_value(memories: &mut [f64], token: &str, prev_result: f64) {
     // tokenの3文字目から最後の文字の1つ前までを取得
     // 例: mem10+ といった文字列の場合、10を取得
     let slot_index: usize = token[3..token.len() - 1].parse().unwrap();
