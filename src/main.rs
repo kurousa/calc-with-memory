@@ -92,36 +92,40 @@ fn main() {
         let left: f64 = memories.eval_token(first_token);
         let right: f64 = memories.eval_token(third_token);
         let expression: &str = tokens[1];
-        let result: f64 = match expression {
-            "+" => add_value(left, right),
-            "-" => sub_value(left, right),
-            "*" => multiply_value(left, right),
-            "/" => divide_value(left, right),
-            _ => unreachable!("Invalid operator, use only +, -, *, /"),
-        };
+        let result: f64 = eval_expression(left, expression, right);
         print_formula_result(line, result);
         prev_result = result;
     }
 }
 
-// 計算結果出力
+/// 式の計算処理の解釈
+fn eval_expression(left: f64, operator: &str, right: f64) -> f64 {
+    match operator {
+        "+" => add_value(left, right),
+        "-" => sub_value(left, right),
+        "*" => multiply_value(left, right),
+        "/" => divide_value(left, right),
+        _ => unreachable!("Invalid operator, use only +, -, *, /"),
+    }
+}
+/// 計算結果出力
 fn print_formula_result(formula: String, result: f64) {
     println!("{} equal {}", formula, result);
 }
 
-// 加算処理
+/// 加算処理
 fn add_value(left: f64, right: f64) -> f64 {
     left + right
 }
-// 減算処理
+/// 減算処理
 fn sub_value(left: f64, right: f64) -> f64 {
     left - right
 }
-// 乗算処理
+/// 乗算処理
 fn multiply_value(left: f64, right: f64) -> f64 {
     left * right
 }
-// 除算処理
+/// 除算処理
 fn divide_value(left: f64, right: f64) -> f64 {
     left / right
 }
