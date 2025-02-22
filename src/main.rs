@@ -133,9 +133,7 @@ fn main() {
                 print_formula_result(line, result);
             }
             _ => {
-                let left = eval_token(&tokens[0], &memories);
-                let right = eval_token(&tokens[2], &memories);
-                let result = eval_expression(left, &tokens[1], right);
+                let result = eval_expression(&tokens, &memories);
                 print_formula_result(line, result);
                 prev_result = result;
             }
@@ -152,33 +150,54 @@ fn eval_token(token: &Token, memory: &Memory) -> f64 {
     }
 }
 /// 式の計算処理の解釈
-fn eval_expression(left: f64, operator: &Token, right: f64) -> f64 {
-    match operator {
-        Token::Plus => add_value(left, right),
-        Token::Minus => sub_value(left, right),
-        Token::Asterisk => multiply_value(left, right),
-        Token::Slash => divide_value(left, right),
-        _ => unreachable!("Invalid operator, use only +, -, *, /"),
+fn eval_expression(tokens: &[Token], memory: &Memory) -> f64 {
+    eval_additive_expression(tokens, memory)
+}
+/// 加減算処理
+fn eval_additive_expression(tokens: &[Token], memory: &Memory) -> f64 {
+    let mut index = 0;
+    let mut result;
+
+    (result, index) = eval_multiplicative_expression(tokens, index, memory);
+    while index < tokens.len() {
+        match &tokens[index] {
+            Token::Plus => {
+                let (value, next) = eval_multiplicative_expression(tokens, index + 1, memory);
+                result += value;
+                index = next;
+            }
+            Token::Minus => {
+                let (value, next) = eval_multiplicative_expression(tokens, index + 1, memory);
+                result -= value;
+                index = next;
+            }
+            _ => break,
+        }
     }
+    result
+}
+/// 乗除算処理
+fn eval_multiplicative_expression(tokens: &[Token], index: usize, memory: &Memory) -> (f64, usize) {
+    let mut index: usize = index;
+    let mut result: f64 = eval_token(&tokens[index], memory);
+    index += 1;
+
+    while index < tokens.len() {
+        match &tokens[index] {
+            Token::Asterisk => {
+                result *= eval_token(&tokens[index + 1], memory);
+                index += 2
+            }
+            Token::Slash => {
+                result /= eval_token(&tokens[index + 1], memory);
+                index += 2
+            }
+            _ => break,
+        }
+    }
+    (result, index)
 }
 /// 計算結果出力
 fn print_formula_result(formula: String, result: f64) {
     println!("{} equal {}", formula, result);
-}
-
-/// 加算処理
-fn add_value(left: f64, right: f64) -> f64 {
-    left + right
-}
-/// 減算処理
-fn sub_value(left: f64, right: f64) -> f64 {
-    left - right
-}
-/// 乗算処理
-fn multiply_value(left: f64, right: f64) -> f64 {
-    left * right
-}
-/// 除算処理
-fn divide_value(left: f64, right: f64) -> f64 {
-    left / right
 }
