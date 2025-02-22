@@ -4,10 +4,12 @@
 //!
 //! - 計算式を1行ずつ読み込んで処理
 //!   - 空白区切りで、数値 演算子 数値といった入力をすることで計算結果を出力する
-//!   - mem+、mem-とだけ入力すると、直前の計算結果がメモリに足し引きされる
-//!   - 計算式の 数値 の部分が、 mem となっていた場合、数値代わりにメモリの値を利用する
+//!   - mem<memory_name>+、mem<memory_name>-とだけ入力すると、直前の計算結果がメモリに足し引きされる
+//!     - <memory_name>は、どのような文字でも可
+//!   - 計算式の 数値 の部分が、 mem<memory_name> となっていた場合、数値代わりにメモリの値を利用する
 //!   - メモリは10個まで保持可能
 //!   - メモリには名前付きで(例("名前",値)のタプルでの表現)が可能
+//!   - 括弧でくくった計算式を優先して処理
 //! - 計算結果は整数型ではなく小数型(f64)で管理
 //!
 //! 例
@@ -75,6 +77,10 @@ enum Token {
     Asterisk,
     // 除算演算子
     Slash,
+    // 開き括弧"("
+    LParen,
+    // 閉じ括弧")"
+    RParen,
 }
 impl Token {
     /// トークンのパース処理
@@ -84,6 +90,8 @@ impl Token {
             "-" => Self::Minus,
             "*" => Self::Asterisk,
             "/" => Self::Slash,
+            "(" => Self::LParen,
+            ")" => Self::RParen,
             // 上記にあてはまらないかつ、memで始まる場合
             _ if value.starts_with("mem") => {
                 let mut memory_name = value[3..].to_string();
@@ -151,12 +159,14 @@ fn eval_token(token: &Token, memory: &Memory) -> f64 {
 }
 /// 式の計算処理の解釈
 fn eval_expression(tokens: &[Token], memory: &Memory) -> f64 {
-    eval_additive_expression(tokens, memory)
+    let (result, index) = eval_additive_expression(tokens, 0, memory);
+    assert_eq!(tokens.len(), index);
+    result
 }
 /// 加減算処理
-fn eval_additive_expression(tokens: &[Token], memory: &Memory) -> f64 {
-    let mut index = 0;
-    let mut result;
+fn eval_additive_expression(tokens: &[Token], index: usize, memory: &Memory) -> (f64, usize) {
+    let mut index: usize = index;
+    let mut result: f64;
 
     (result, index) = eval_multiplicative_expression(tokens, index, memory);
     while index < tokens.len() {
@@ -174,28 +184,57 @@ fn eval_additive_expression(tokens: &[Token], memory: &Memory) -> f64 {
             _ => break,
         }
     }
-    result
+    (result, index)
 }
 /// 乗除算処理
 fn eval_multiplicative_expression(tokens: &[Token], index: usize, memory: &Memory) -> (f64, usize) {
     let mut index: usize = index;
-    let mut result: f64 = eval_token(&tokens[index], memory);
-    index += 1;
+    let mut result: f64;
+    (result, index) = eval_primary_expression(tokens, index, memory);
 
     while index < tokens.len() {
         match &tokens[index] {
             Token::Asterisk => {
-                result *= eval_token(&tokens[index + 1], memory);
-                index += 2
+                let (value, next) = eval_primary_expression(tokens, index, memory);
+                result *= value;
+                index = next;
             }
             Token::Slash => {
-                result /= eval_token(&tokens[index + 1], memory);
-                index += 2
+                let (value, next) = eval_primary_expression(tokens, index, memory);
+                result /= value;
+                index = next;
             }
             _ => break,
         }
     }
     (result, index)
+}
+/// 括弧の処理
+fn eval_primary_expression(tokens: &[Token], index: usize, memory: &Memory) -> (f64, usize) {
+    let first_token = &tokens[index];
+    dbg!(first_token);
+    match first_token {
+        Token::LParen => {
+            // 開き括弧始まりであるため、括弧の直後のトークンから計算
+            let (result, next) = eval_additive_expression(tokens, index + 1, memory);
+            // 処理後は閉じ括弧終わりになっていることを検証
+            assert_eq!(Token::RParen, tokens[next]);
+            // 閉じ括弧分を進めたindexで返す
+            dbg!(result, next + 1);
+            (result, next + 1)
+        }
+        Token::Number(value) => {
+            // 数値のためその値と次の値を返却
+            dbg!(*value, index + 1);
+            (*value, index + 1)
+        }
+        Token::MemoryRef(memory_name) => {
+            // メモリを参照しているためその値と次の値を返却
+            dbg!(memory.get(memory_name), index + 1);
+            (memory.get(memory_name), index + 1)
+        }
+        _ => unreachable!(),
+    }
 }
 /// 計算結果出力
 fn print_formula_result(formula: String, result: f64) {
