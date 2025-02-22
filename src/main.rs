@@ -14,7 +14,13 @@
 //! ```rust
 //! 1 + 2
 //! => 3
-//! ``
+//! 3 * 4
+//! => 12
+//! mem+ 5
+//! => 17
+//! mem- 2
+//! => 15
+//! ```
 use std::collections::{hash_map::Entry, HashMap};
 use std::io::stdin;
 
@@ -31,6 +37,7 @@ impl Memory {
             slots: HashMap::new(),
         }
     }
+    /// メモリの追加、更新処理
     fn add(&mut self, slot_name: String, prev_result: f64) -> f64 {
         match self.slots.entry(slot_name) {
             Entry::Occupied(mut entry) => {
@@ -43,6 +50,7 @@ impl Memory {
             }
         }
     }
+    /// メモリの値取得処理
     fn get(&self, slot_name: &str) -> f64 {
         self.slots.get(slot_name).copied().unwrap_or(0.0)
     }
@@ -97,7 +105,7 @@ impl Token {
         text.split(char::is_whitespace).map(Self::parse).collect()
     }
 }
-
+/// メイン処理
 fn main() {
     let mut memories: Memory = Memory::new();
     let mut prev_result: f64 = 0.0;
