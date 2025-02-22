@@ -51,7 +51,7 @@ impl Memory {
 enum Token {
     // 数値部
     Number(f64),
-    // メモリ名
+    // メモリ参照
     MemoryRef(String),
     // 加算メモリ
     MemoryPlus(String),
@@ -74,22 +74,20 @@ impl Token {
             "-" => Self::Minus,
             "*" => Self::Asterisk,
             "/" => Self::Slash,
-            _ => {
-                if value.starts_with("mem") {
-                    let mut memory_name = value[3..].to_string();
-                    if value.ends_with('+') {
-                        memory_name.pop();
-                        Self::MemoryPlus(memory_name)
-                    } else if value.ends_with('-') {
-                        memory_name.pop();
-                        Self::MemoryMinus(memory_name)
-                    } else {
-                        Self::MemoryRef(memory_name)
-                    }
+            // 上記にあてはまらないかつ、memで始まる場合
+            _ if value.starts_with("mem") => {
+                let mut memory_name = value[3..].to_string();
+                if value.ends_with('+') {
+                    memory_name.pop();
+                    Self::MemoryPlus(memory_name)
+                } else if value.ends_with('-') {
+                    memory_name.pop();
+                    Self::MemoryMinus(memory_name)
                 } else {
-                    Self::Number(value.parse().unwrap())
+                    Self::MemoryRef(memory_name)
                 }
             }
+            _ => Self::Number(value.parse().unwrap()),
         }
     }
     /// 入力値の分割とパース処理結果の取得
