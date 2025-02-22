@@ -1,4 +1,4 @@
-/// メモリ機能付き電卓
+use std::collections::{hash_map::Entry, HashMap};
 ///
 /// 仕様
 ///
@@ -16,30 +16,27 @@
 /// => 3
 /// ``
 use std::io::stdin;
-
 /// メモリ構造体
 struct Memory {
     /// メモリの名前と値のタプルを配列で保持
-    slots: Vec<(String, f64)>,
+    slots: HashMap<String, f64>,
 }
 /// Memory構造体に関わるメソッドの実装
 impl Memory {
     /// Memory構造体の初期化
     fn new() -> Self {
-        Self { slots: vec![] }
+        Self {
+            slots: HashMap::new(),
+        }
     }
     /// tokenがmemで始まる場合はメモリの値を返却
     fn eval_token(&self, token: &str) -> f64 {
         if token.starts_with("mem") {
             let slot_name: &str = &token[3..];
-            for slot in &self.slots {
-                if slot.0 == slot_name {
-                    // 保管している値を返却
-                    return slot.1;
-                }
-            }
-            // メモリが見つからない場合は初期値0.0を返却
-            0.0
+            // self.slots.get(slot_name)の戻り値は、Option<&f64>で中身は参照
+            // そのままでは値を返せないため、copied()でOption<f64>に変換
+            // unwrap_or(0.0)でOption<f64>の中身がNoneの場合は0.0を返却
+            self.slots.get(slot_name).copied().unwrap_or(0.0)
         } else {
             token.parse().unwrap()
         }
@@ -48,18 +45,19 @@ impl Memory {
     fn set_memory_print_value(&mut self, token: &str, prev_result: f64) {
         // tokenの3文字目から最後の文字の1つ前までを取得
         // 例: mem10+ といった文字列の場合、10を取得
-        let slot_name: &str = &token[3..token.len() - 1];
-        for slot in self.slots.iter_mut() {
-            if slot.0 == slot_name {
-                // 既に存在する場合は値を更新し、コンソールに出力して終了
-                slot.1 += prev_result;
-                print_formula_result(format!("set memory{}", slot_name), slot.1);
-                return;
+        let slot_name = &token[3..token.len() - 1];
+        match self.slots.entry(slot_name.to_string()) {
+            Entry::Occupied(mut entry) => {
+                // メモリが見つかった場合は値を更新
+                *entry.get_mut() += prev_result;
+                print_formula_result(format!("set memory{}", slot_name), *entry.get());
+            }
+            Entry::Vacant(entry) => {
+                // メモリが見つからなかった場合は末尾に追加
+                entry.insert(prev_result);
+                print_formula_result(format!("set memory{}", slot_name), prev_result);
             }
         }
-        // メモリが見つからなかった場合は末尾に追加
-        self.slots.push((slot_name.to_string(), prev_result));
-        print_formula_result(format!("set memory{}", slot_name), prev_result);
     }
 }
 
